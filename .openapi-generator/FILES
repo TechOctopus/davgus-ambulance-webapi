@@ -1,0 +1,11 @@
+internal/ambulance_wl/README.md
+internal/ambulance_wl/api_departments.go
+internal/ambulance_wl/api_patients.go
+internal/ambulance_wl/api_placements.go
+internal/ambulance_wl/model_department.go
+internal/ambulance_wl/model_patient.go
+internal/ambulance_wl/model_patient_create_request.go
+internal/ambulance_wl/model_placement.go
+internal/ambulance_wl/model_placement_create_request.go
+internal/ambulance_wl/model_room.go
+internal/ambulance_wl/routers.go
