@@ -1,0 +1,733 @@
+openapi: 3.0.0
+servers:
+  - description: Cluster Endpoint
+    url: /api
+info:
+  description: Patient, department and placement management for davgus-ambulance
+  version: "1.0.0"
+  title: davgus ambulance API
+  contact:
+    email: xdavydau@stuba.sk, xgusiev@stuba.sk
+  license:
+    name: CC BY 4.0
+    url: "https://creativecommons.org/licenses/by/4.0/"
+tags:
+  - name: patients
+    description: Patient CRUD operations
+  - name: departments
+    description: Department and room configuration operations
+  - name: placements
+    description: Placement CRUD operations
+paths:
+  /patients:
+    get:
+      tags:
+        - patients
+      summary: Get all active patients
+      operationId: getPatients
+      description: Returns all patients where archived equals false.
+      responses:
+        "200":
+          description: List of active patients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Patient"
+              examples:
+                response:
+                  $ref: "#/components/examples/PatientsExample"
+    post:
+      tags:
+        - patients
+      summary: Create patient
+      operationId: createPatient
+      description: Creates a patient entry with generated identifier.
+      requestBody:
+        required: true
+        description: Patient to create
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientCreateRequest"
+            examples:
+              request:
+                $ref: "#/components/examples/PatientCreateRequestExample"
+      responses:
+        "201":
+          description: Created patient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+              examples:
+                response:
+                  $ref: "#/components/examples/PatientExample"
+        "400":
+          description: Invalid patient payload
+
+  /patients/{patientId}:
+    get:
+      tags:
+        - patients
+      summary: Get patient by id
+      operationId: getPatient
+      description: Returns one patient by id.
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema:
+            type: string
+          description: Patient identifier
+      responses:
+        "200":
+          description: Patient detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+              examples:
+                response:
+                  $ref: "#/components/examples/PatientExample"
+        "404":
+          description: Patient not found
+    put:
+      tags:
+        - patients
+      summary: Update patient
+      operationId: updatePatient
+      description: Updates patient and propagates name change to placements.
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema:
+            type: string
+          description: Patient identifier
+      requestBody:
+        required: true
+        description: Full patient object to update
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Patient"
+            examples:
+              request:
+                $ref: "#/components/examples/PatientExample"
+      responses:
+        "200":
+          description: Updated patient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+              examples:
+                response:
+                  $ref: "#/components/examples/PatientExample"
+        "400":
+          description: Path id does not match body id
+        "404":
+          description: Patient not found
+    delete:
+      tags:
+        - patients
+      summary: Archive patient
+      operationId: deletePatient
+      description: Marks patient as archived and removes associated placements.
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema:
+            type: string
+          description: Patient identifier
+      responses:
+        "204":
+          description: Patient archived
+        "404":
+          description: Patient not found
+
+  /patients/{patientId}/placement:
+    get:
+      tags:
+        - placements
+      summary: Get placement for patient
+      operationId: getPlacementForPatient
+      description: Returns current placement for a given patient.
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema:
+            type: string
+          description: Patient identifier
+      responses:
+        "200":
+          description: Placement assigned to patient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Placement"
+              examples:
+                response:
+                  $ref: "#/components/examples/PlacementExample"
+        "404":
+          description: Placement not found for patient
+
+  /departments:
+    get:
+      tags:
+        - departments
+      summary: Get all departments
+      operationId: getDepartments
+      description: Returns all departments with room configuration.
+      responses:
+        "200":
+          description: List of departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Department"
+              examples:
+                response:
+                  $ref: "#/components/examples/DepartmentsExample"
+
+  /departments/{departmentId}:
+    get:
+      tags:
+        - departments
+      summary: Get department by id
+      operationId: getDepartment
+      description: Returns one department by id.
+      parameters:
+        - in: path
+          name: departmentId
+          required: true
+          schema:
+            type: string
+          description: Department identifier
+      responses:
+        "200":
+          description: Department detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+              examples:
+                response:
+                  $ref: "#/components/examples/DepartmentExample"
+        "404":
+          description: Department not found
+    put:
+      tags:
+        - departments
+      summary: Update department
+      operationId: updateDepartment
+      description: Updates department and its rooms.
+      parameters:
+        - in: path
+          name: departmentId
+          required: true
+          schema:
+            type: string
+          description: Department identifier
+      requestBody:
+        required: true
+        description: Full department object to update
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Department"
+            examples:
+              request:
+                $ref: "#/components/examples/DepartmentExample"
+      responses:
+        "200":
+          description: Updated department
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+              examples:
+                response:
+                  $ref: "#/components/examples/DepartmentExample"
+        "400":
+          description: Path id does not match body id
+        "404":
+          description: Department not found
+
+  /placements:
+    get:
+      tags:
+        - placements
+      summary: Get all placements
+      operationId: getPlacements
+      description: Returns all active patient placements.
+      responses:
+        "200":
+          description: List of placements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Placement"
+              examples:
+                response:
+                  $ref: "#/components/examples/PlacementsExample"
+    post:
+      tags:
+        - placements
+      summary: Create placement
+      operationId: createPlacement
+      description: Creates a placement with generated identifier.
+      requestBody:
+        required: true
+        description: Placement to create
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlacementCreateRequest"
+            examples:
+              request:
+                $ref: "#/components/examples/PlacementCreateRequestExample"
+      responses:
+        "201":
+          description: Created placement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Placement"
+              examples:
+                response:
+                  $ref: "#/components/examples/PlacementExample"
+        "400":
+          description: Invalid placement payload
+
+  /placements/{placementId}:
+    get:
+      tags:
+        - placements
+      summary: Get placement by id
+      operationId: getPlacement
+      description: Returns one placement by id.
+      parameters:
+        - in: path
+          name: placementId
+          required: true
+          schema:
+            type: string
+          description: Placement identifier
+      responses:
+        "200":
+          description: Placement detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Placement"
+              examples:
+                response:
+                  $ref: "#/components/examples/PlacementExample"
+        "404":
+          description: Placement not found
+    put:
+      tags:
+        - placements
+      summary: Update placement
+      operationId: updatePlacement
+      description: Updates a placement.
+      parameters:
+        - in: path
+          name: placementId
+          required: true
+          schema:
+            type: string
+          description: Placement identifier
+      requestBody:
+        required: true
+        description: Full placement object to update
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Placement"
+            examples:
+              request:
+                $ref: "#/components/examples/PlacementExample"
+      responses:
+        "200":
+          description: Updated placement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Placement"
+              examples:
+                response:
+                  $ref: "#/components/examples/PlacementExample"
+        "400":
+          description: Path id does not match body id
+        "404":
+          description: Placement not found
+    delete:
+      tags:
+        - placements
+      summary: Delete placement
+      operationId: deletePlacement
+      description: Deletes one placement by id.
+      parameters:
+        - in: path
+          name: placementId
+          required: true
+          schema:
+            type: string
+          description: Placement identifier
+      responses:
+        "204":
+          description: Placement deleted
+        "404":
+          description: Placement not found
+
+components:
+  schemas:
+    Patient:
+      type: object
+      required:
+        - id
+        - name
+        - birthDate
+        - insuranceId
+        - insuranceCompany
+        - phone
+        - email
+        - archived
+      properties:
+        id:
+          type: string
+          example: p1
+        name:
+          type: string
+          example: Ján Novák
+        birthDate:
+          type: string
+          format: date
+          example: "1985-03-15"
+        insuranceId:
+          type: string
+          example: "8503150001"
+        insuranceCompany:
+          type: string
+          example: VšZP
+        phone:
+          type: string
+          example: "+421901234567"
+        email:
+          type: string
+          format: email
+          example: jan.novak@email.sk
+        archived:
+          type: boolean
+          example: false
+      example:
+        $ref: "#/components/examples/PatientExample"
+
+    PatientCreateRequest:
+      type: object
+      required:
+        - name
+        - birthDate
+        - insuranceId
+        - insuranceCompany
+        - phone
+        - email
+      properties:
+        name:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        insuranceId:
+          type: string
+        insuranceCompany:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        archived:
+          type: boolean
+          default: false
+      example:
+        $ref: "#/components/examples/PatientCreateRequestExample"
+
+    Placement:
+      type: object
+      required:
+        - id
+        - patientId
+        - patientName
+        - departmentId
+        - departmentName
+        - roomId
+        - roomNumber
+        - admissionDate
+        - notes
+      properties:
+        id:
+          type: string
+          example: pl1
+        patientId:
+          type: string
+          example: p1
+        patientName:
+          type: string
+          example: Ján Novák
+        departmentId:
+          type: string
+          example: d1
+        departmentName:
+          type: string
+          example: Kardiológia
+        roomId:
+          type: string
+          example: r1
+        roomNumber:
+          type: string
+          example: "101"
+        admissionDate:
+          type: string
+          format: date
+          example: "2024-01-15"
+        notes:
+          type: string
+          example: Plánovaná hospitalizácia
+      example:
+        $ref: "#/components/examples/PlacementExample"
+
+    PlacementCreateRequest:
+      type: object
+      required:
+        - patientId
+        - patientName
+        - departmentId
+        - departmentName
+        - roomId
+        - roomNumber
+        - admissionDate
+        - notes
+      properties:
+        patientId:
+          type: string
+        patientName:
+          type: string
+        departmentId:
+          type: string
+        departmentName:
+          type: string
+        roomId:
+          type: string
+        roomNumber:
+          type: string
+        admissionDate:
+          type: string
+          format: date
+        notes:
+          type: string
+      example:
+        $ref: "#/components/examples/PlacementCreateRequestExample"
+
+    Room:
+      type: object
+      required:
+        - id
+        - number
+        - capacity
+        - status
+      properties:
+        id:
+          type: string
+          example: r1
+        number:
+          type: string
+          example: "101"
+        capacity:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+        status:
+          type: string
+          enum:
+            - active
+            - maintenance
+            - closed
+          example: active
+      example:
+        $ref: "#/components/examples/RoomExample"
+
+    Department:
+      type: object
+      required:
+        - id
+        - name
+        - rooms
+      properties:
+        id:
+          type: string
+          example: d1
+        name:
+          type: string
+          example: Kardiológia
+        rooms:
+          type: array
+          items:
+            $ref: "#/components/schemas/Room"
+      example:
+        $ref: "#/components/examples/DepartmentExample"
+
+  examples:
+    PatientExample:
+      summary: Existing patient
+      value:
+        id: p1
+        name: Ján Novák
+        birthDate: "1985-03-15"
+        insuranceId: "8503150001"
+        insuranceCompany: VšZP
+        phone: "+421901234567"
+        email: jan.novak@email.sk
+        archived: false
+
+    PatientCreateRequestExample:
+      summary: New patient request
+      value:
+        name: Anna Bieliková
+        birthDate: "1992-06-11"
+        insuranceId: "9206110008"
+        insuranceCompany: Dôvera
+        phone: "+421904111222"
+        email: anna.bielikova@email.sk
+        archived: false
+
+    PatientsExample:
+      summary: List of active patients
+      value:
+        - id: p1
+          name: Ján Novák
+          birthDate: "1985-03-15"
+          insuranceId: "8503150001"
+          insuranceCompany: VšZP
+          phone: "+421901234567"
+          email: jan.novak@email.sk
+          archived: false
+        - id: p2
+          name: Mária Kováčová
+          birthDate: "1990-07-22"
+          insuranceId: "9007220002"
+          insuranceCompany: Dôvera
+          phone: "+421902345678"
+          email: maria.kovacova@email.sk
+          archived: false
+
+    RoomExample:
+      summary: Room detail
+      value:
+        id: r1
+        number: "101"
+        capacity: 3
+        status: active
+
+    DepartmentExample:
+      summary: Department with rooms
+      value:
+        id: d1
+        name: Kardiológia
+        rooms:
+          - id: r1
+            number: "101"
+            capacity: 3
+            status: active
+          - id: r2
+            number: "102"
+            capacity: 2
+            status: active
+          - id: r3
+            number: "103"
+            capacity: 1
+            status: maintenance
+
+    DepartmentsExample:
+      summary: List of departments
+      value:
+        - id: d1
+          name: Kardiológia
+          rooms:
+            - id: r1
+              number: "101"
+              capacity: 3
+              status: active
+            - id: r2
+              number: "102"
+              capacity: 2
+              status: active
+        - id: d2
+          name: Chirurgia
+          rooms:
+            - id: r4
+              number: "201"
+              capacity: 4
+              status: active
+            - id: r5
+              number: "202"
+              capacity: 2
+              status: active
+
+    PlacementExample:
+      summary: Existing placement
+      value:
+        id: pl1
+        patientId: p1
+        patientName: Ján Novák
+        departmentId: d1
+        departmentName: Kardiológia
+        roomId: r1
+        roomNumber: "101"
+        admissionDate: "2024-01-15"
+        notes: Plánovaná hospitalizácia
+
+    PlacementCreateRequestExample:
+      summary: New placement request
+      value:
+        patientId: p3
+        patientName: Peter Horváth
+        departmentId: d3
+        departmentName: Neurológia
+        roomId: r6
+        roomNumber: "301"
+        admissionDate: "2024-03-01"
+        notes: Pozorovanie
+
+    PlacementsExample:
+      summary: List of placements
+      value:
+        - id: pl1
+          patientId: p1
+          patientName: Ján Novák
+          departmentId: d1
+          departmentName: Kardiológia
+          roomId: r1
+          roomNumber: "101"
+          admissionDate: "2024-01-15"
+          notes: Plánovaná hospitalizácia
+        - id: pl2
+          patientId: p2
+          patientName: Mária Kováčová
+          departmentId: d2
+          departmentName: Chirurgia
+          roomId: r4
+          roomNumber: "201"
+          admissionDate: "2024-02-01"
+          notes: Po operácii
