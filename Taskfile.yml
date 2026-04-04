@@ -3,6 +3,8 @@ version: "3"
 env:
   AMBULANCE_API_ENVIRONMENT: Development
   AMBULANCE_API_PORT: "8080"
+  AMBULANCE_API_MONGODB_USERNAME: root
+  AMBULANCE_API_MONGODB_PASSWORD: secret
 
 tasks:
   default:
@@ -11,7 +13,13 @@ tasks:
 
   start:
     cmds:
+      - docker compose --file ./deployments/docker-compose/compose.yaml up --detach
+      - defer: docker compose --file ./deployments/docker-compose/compose.yaml down
       - go run ./cmd/ambulance-api-service
+
+  mongo:
+    cmds:
+      - docker compose --file ./deployments/docker-compose/compose.yaml up
 
   openapi:
     cmds:
