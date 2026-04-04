@@ -17,6 +17,14 @@ import (
 type DepartmentsAPI interface {
 
 
+    // CreateDepartment Post /api/departments
+    // Create new department 
+     CreateDepartment(c *gin.Context)
+
+    // DeleteDepartment Delete /api/departments/:departmentId
+    // Deletes specific department 
+     DeleteDepartment(c *gin.Context)
+
     // GetDepartment Get /api/departments/:departmentId
     // Get department by id 
      GetDepartment(c *gin.Context)

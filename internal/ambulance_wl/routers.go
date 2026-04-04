@@ -74,6 +74,18 @@ type ApiHandleFunctions struct {
 func getRoutes(handleFunctions ApiHandleFunctions) []Route {
 	return []Route{ 
 		{
+			"CreateDepartment",
+			http.MethodPost,
+			"/api/departments",
+			handleFunctions.DepartmentsAPI.CreateDepartment,
+		},
+		{
+			"DeleteDepartment",
+			http.MethodDelete,
+			"/api/departments/:departmentId",
+			handleFunctions.DepartmentsAPI.DeleteDepartment,
+		},
+		{
 			"GetDepartment",
 			http.MethodGet,
 			"/api/departments/:departmentId",

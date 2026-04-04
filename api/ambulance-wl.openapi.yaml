@@ -195,6 +195,36 @@ paths:
               examples:
                 response:
                   $ref: "#/components/examples/DepartmentsExample"
+    post:
+      tags:
+        - departments
+      summary: Create new department
+      operationId: createDepartment
+      description: Use this method to initialize new department in the system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Department"
+            examples:
+              request-sample:
+                $ref: "#/components/examples/DepartmentExample"
+        description: Department details to store
+        required: true
+      responses:
+        "200":
+          description: Value of stored department
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+              examples:
+                updated-response:
+                  $ref: "#/components/examples/DepartmentExample"
+        "400":
+          description: Missing mandatory properties of input object.
+        "409":
+          description: Entry with the specified id already exists
 
   /departments/{departmentId}:
     get:
@@ -259,6 +289,24 @@ paths:
           description: Path id does not match body id
         "404":
           description: Department not found
+    delete:
+      tags:
+        - departments
+      summary: Deletes specific department
+      operationId: deleteDepartment
+      description: Use this method to delete the specific department from the system.
+      parameters:
+        - in: path
+          name: departmentId
+          description: pass the id of the particular department
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Item deleted
+        "404":
+          description: Department with such ID does not exist
 
   /placements:
     get:
