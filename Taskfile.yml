@@ -22,6 +22,10 @@ tasks:
     cmds:
       - docker compose --file ./deployments/docker-compose/compose.yaml up
 
+  test:
+    cmds:
+      - go test -v ./...
+
   openapi:
     cmds:
       - docker run --rm -ti -v {{.ROOT_DIR}}:/local openapitools/openapi-generator-cli generate -c /local/scripts/generator-cfg.yaml
