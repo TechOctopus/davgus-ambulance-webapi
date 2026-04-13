@@ -29,3 +29,7 @@ tasks:
   openapi:
     cmds:
       - docker run --rm -ti -v {{.ROOT_DIR}}:/local openapitools/openapi-generator-cli generate -c /local/scripts/generator-cfg.yaml
+
+  docker:
+    cmds:
+      - docker build -t fiitkar/davgus-ambulance-wl-webapi:local-build -f {{.ROOT_DIR}}/build/docker/Dockerfile .
