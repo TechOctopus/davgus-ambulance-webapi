@@ -52,7 +52,7 @@ func (o *implPatientsAPI) CreatePatient(c *gin.Context) {
 	}
 }
 
-// DeletePatient - Deletes specific patient
+// DeletePatient - Archives patient and removes associated placements
 func (o *implPatientsAPI) DeletePatient(c *gin.Context) {
 	value, exists := c.Get("db_service_patients")
 	if !exists {
@@ -60,23 +60,64 @@ func (o *implPatientsAPI) DeletePatient(c *gin.Context) {
 		return
 	}
 
-	db, ok := value.(db_service.DbService[Patient])
+	patientDb, ok := value.(db_service.DbService[Patient])
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "Internal Server Error", "message": "db_service context is not of type DbService"})
 		return
 	}
 
+	placementValue, exists := c.Get("db_service_placements")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "Internal Server Error", "message": "db_service_placements not found"})
+		return
+	}
+
+	placementDb, ok := placementValue.(db_service.DbService[Placement])
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "Internal Server Error", "message": "db_service_placements context is not of type DbService"})
+		return
+	}
+
 	patientId := c.Param("patientId")
-	err := db.DeleteDocument(c, patientId)
+	patient, err := patientDb.FindDocument(c, patientId)
 
 	switch err {
 	case nil:
-		c.AbortWithStatus(http.StatusNoContent)
+		// continue
 	case db_service.ErrNotFound:
 		c.JSON(http.StatusNotFound, gin.H{"status": "Not Found", "message": "Patient not found", "error": err.Error()})
+		return
 	default:
-		c.JSON(http.StatusBadGateway, gin.H{"status": "Bad Gateway", "message": "Failed to delete patient from database", "error": err.Error()})
+		c.JSON(http.StatusBadGateway, gin.H{"status": "Bad Gateway", "message": "Failed to load patient from database", "error": err.Error()})
+		return
 	}
+
+	patient.Archived = true
+	err = patientDb.UpdateDocument(c, patientId, patient)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"status": "Bad Gateway", "message": "Failed to archive patient", "error": err.Error()})
+		return
+	}
+
+	placements, err := placementDb.FindAllDocuments(c)
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"status": "Bad Gateway", "message": "Failed to load placements from database", "error": err.Error()})
+		return
+	}
+
+	for _, placement := range placements {
+		if placement.PatientId != patientId {
+			continue
+		}
+
+		err = placementDb.DeleteDocument(c, placement.Id)
+		if err != nil && err != db_service.ErrNotFound {
+			c.JSON(http.StatusBadGateway, gin.H{"status": "Bad Gateway", "message": "Failed to delete patient placements", "error": err.Error()})
+			return
+		}
+	}
+
+	c.AbortWithStatus(http.StatusNoContent)
 }
 
 // GetPatient - Provides details about patient
@@ -106,7 +147,15 @@ func (o *implPatientsAPI) GetPatients(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, patients)
+	activePatients := make([]Patient, 0, len(patients))
+	for _, patient := range patients {
+		if patient.Archived {
+			continue
+		}
+		activePatients = append(activePatients, patient)
+	}
+
+	c.JSON(http.StatusOK, activePatients)
 }
 
 // UpdatePatient - Updates specific patient
